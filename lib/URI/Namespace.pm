@@ -1,7 +1,21 @@
 package URI::Namespace;
 use Moose;
+use namespace::autoclean;
 use Moose::Util::TypeConstraints;
-use URI;
+use URI ();
+use XML::CommonNS ();
+
+sub import {
+    my $class = shift;
+    return unless @_;
+    my $pkg = caller(1);
+    for my $name (@_) {
+	my $uri = XML::CommonNS->uri(uc($name)) . '';
+        $uri .= '#' if uc $name eq 'XSD';
+        no strict "refs";
+	*{"${pkg}::$name"} = \$class->new("$uri");
+    }
+}
 
 =head1 NAME
 
@@ -60,6 +74,7 @@ around BUILDARGS => sub {
 };
 
 class_type 'URI';
+class_type 'XML::NamespaceFactory';
 coerce 'URI' => from 'Str' => via { URI->new($_) };
 
 has uri => ( 
